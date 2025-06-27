@@ -1,17 +1,14 @@
 bl_info = {
     "name": "AE2Blend",
     "author": "AE2Blend Contributors",
-    "version": (1, 0, 0),
+    "version": (1, 1, 0),
     "blender": (2, 80, 0),
     "location": "View3D > Sidebar > AE2Blend",
-    "description": "Paste keyframes and create objects from After Effects",
+    "description": "Manually paste keyframes from After Effects",
     "category": "Animation",
 }
 
 import bpy
-import mathutils
-import pyperclip
-import math
 
 class AE2BLEND_PT_Panel(bpy.types.Panel):
     bl_label = "AE2Blend"
@@ -22,6 +19,8 @@ class AE2BLEND_PT_Panel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        scene = context.scene
+        layout.prop(scene, "ae2blend_text")
         layout.operator("ae2blend.paste_keyframes")
         layout.operator("ae2blend.create_empty")
         layout.operator("ae2blend.create_plane")
@@ -30,12 +29,10 @@ class AE2BLEND_PT_Panel(bpy.types.Panel):
 class AE2BLEND_OT_PasteKeyframes(bpy.types.Operator):
     bl_label = "Paste Keyframes"
     bl_idname = "ae2blend.paste_keyframes"
-    bl_description = "Paste keyframe data copied from After Effects"
+    bl_description = "Paste keyframe data manually"
 
     def execute(self, context):
-        clipboard = pyperclip.paste()
-        lines = clipboard.splitlines()
-
+        lines = context.scene.ae2blend_text.splitlines()
         obj = context.active_object
         if not obj:
             self.report({'ERROR'}, "No active object selected")
@@ -82,21 +79,26 @@ class AE2BLEND_OT_CreateCamera(bpy.types.Operator):
         bpy.ops.object.camera_add()
         return {'FINISHED'}
 
-classes = (
-    AE2BLEND_PT_Panel,
-    AE2BLEND_OT_PasteKeyframes,
-    AE2BLEND_OT_CreateEmpty,
-    AE2BLEND_OT_CreatePlane,
-    AE2BLEND_OT_CreateCamera,
-)
-
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    bpy.utils.register_class(AE2BLEND_PT_Panel)
+    bpy.utils.register_class(AE2BLEND_OT_PasteKeyframes)
+    bpy.utils.register_class(AE2BLEND_OT_CreateEmpty)
+    bpy.utils.register_class(AE2BLEND_OT_CreatePlane)
+    bpy.utils.register_class(AE2BLEND_OT_CreateCamera)
+    bpy.types.Scene.ae2blend_text = bpy.props.StringProperty(
+        name="Keyframe Data",
+        description="Paste After Effects keyframe data here (tab-separated)",
+        default="",
+        multiline=True
+    )
 
 def unregister():
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    bpy.utils.unregister_class(AE2BLEND_PT_Panel)
+    bpy.utils.unregister_class(AE2BLEND_OT_PasteKeyframes)
+    bpy.utils.unregister_class(AE2BLEND_OT_CreateEmpty)
+    bpy.utils.unregister_class(AE2BLEND_OT_CreatePlane)
+    bpy.utils.unregister_class(AE2BLEND_OT_CreateCamera)
+    del bpy.types.Scene.ae2blend_text
 
 if __name__ == "__main__":
     register()
